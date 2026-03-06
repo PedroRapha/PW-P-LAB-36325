@@ -1,0 +1,37 @@
+{
+  "name": "pw-p-lab-36325",
+  "version": "1.0.0",
+  "description": "My First API - Programacao Web",
+  "keywords": [
+    "ProgramacaoWeb",
+    "PW",
+    "IPVC",
+    "NodeJS",
+    "Node",
+    "API",
+    "Express"
+  ],
+  "homepage": "https://github.com/PedroRapha/PW-P-LAB-36325#readme",
+  "bugs": {
+    "url": "https://github.com/PedroRapha/PW-P-LAB-36325/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PedroRapha/PW-P-LAB-36325.git"
+  },
+  "license": "ISC",
+  "author": "Pedro Raphael Paiva",
+  "type": "commonjs",
+  "main": "server.js",
+"scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+    "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "morgan": "^1.10.1",
+    "nodemon": "^3.1.14"
+  }
+}
