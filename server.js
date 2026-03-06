@@ -201,8 +201,34 @@ let tasks = [
 ];
 //GET /tasks — Listar todas
 
+/*
 app.get("/tasks", (req, res) => {
     res.status(200).json({ data: tasks });
+});
+*/
+
+app.get("/tasks", (req, res) => {
+
+    const { completed } = req.query;
+
+    // Lista tudo (se não houver query)
+    if (completed === undefined) {
+        return res.status(200).json({ data: tasks });
+    }
+
+    // Valida query
+    if (completed !== "true" && completed !== "false") {
+        return res.status(400).json({
+            message: "Query parameter 'completed' must be 'true' or 'false'"
+        });
+    }
+
+    // Lista com filtro
+    const filteredTasks = tasks.filter(
+        task => task.completed === (completed === "true")
+    );
+
+    res.status(200).json({ data: filteredTasks });
 });
 
 //GET /tasks/:id — Obter uma
@@ -218,39 +244,28 @@ app.get("/tasks/:id", (req, res) => {
     res.status(200).json({ data: task });
 });
 
-//GET /tasks?completed=true — Filtrar por estado (usar req.query)
-app.get("/tasks?completed=true", (req, res) => {
-    let qnt = 0;
-    for(let i = 0; i < tasks.length; i++) {
-        if (req.query) {
-            res.status(200).json({ data: task });
-            qnt++;
-        }
-    }
+/*GET /tasks?completed=true — Filtrar por estado (usar req.query)
 
-    if (!qnt) {
-        return res.status(404).json({ message: "Task not found" });
-    }
+NÃO FUNCIONA T.T
+app.get("/tasks", (req, res) => {
+    const { completed } = req.query;
+    
+    const result = completed ? tasks.filter(t => t.completed === (completed === "true")) : tasks;
+
+    res.status(200).json({ data: result });
 });
-//IMPLEMENTAR
-//IMPLEMENTAR
-//IMPLEMENTAR
-//IMPLEMENTAR
-//IMPLEMENTAR
-//IMPLEMENTAR
-//IMPLEMENTAR
-//IMPLEMENTAR
-//IMPLEMENTAR
-//IMPLEMENTAR
-
+*/
 
 //POST /tasks — Criar
 app.post("/tasks", (req, res) => {
     const { title, completed, priority } = req.body;
 
-  // Validação
+    // Validação:
     if (!title || completed === undefined || !priority) {
     return res.status(400).json({ message: "Fields 'title', 'completed', and 'priority' are required" });
+    }
+    if (priority !== "low" && priority !== "medium" && priority !== "high") {
+        return res.status(400).json({ message: "Priority can only be 'low', 'medium' or 'high'"});
     }
 
     const newTask = {
@@ -275,8 +290,13 @@ app.put("/tasks/:id", (req, res) => {
 
     const { title, completed, priority } = req.body;
 
+    // Validação:
     if (!title || completed === undefined || !priority) {
     return res.status(400).json({ message: "Fields 'title', 'completed', and 'priority' are required" });
+    }
+
+    if (priority !== "low" && priority !== "medium" && priority !== "high") {
+        return res.status(400).json({ message: "Priority can only be 'low', 'medium' or 'high'"});
     }
 
     tasks[index] = { id, title, completed, priority };
