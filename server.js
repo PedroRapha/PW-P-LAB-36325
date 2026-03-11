@@ -16,7 +16,11 @@ app.get("/", (req, res) => {
     res.status(200).json({ message: "My API is working!" });
 });
 
-/*---------- EXEMPLO 1 ----------
+
+/*
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+--------------------- Exemplo1 ---------------------
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
 app.get("/users", (req, res) => {
     res.status(200).json({ message: "OK - GET users" });
@@ -36,7 +40,9 @@ app.delete("/users/:id", (req, res) => {
 */
 
 /*
----------- EXEMPLO 2 ----------
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+--------------------- Exemplo2 ---------------------
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 CRUD com Mock
 */
 
@@ -116,7 +122,9 @@ app.delete("/users/:id", (req, res) => {
 });
 
 /*
----------- LAB1 ----------
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+----------------------- LAB1 -----------------------
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 */
 
 let movies = [ { id: 1, title: "Inception", year: 2010 }, { id: 2, title: "Interstellar", year: 2014 } ];
@@ -192,21 +200,16 @@ app.delete("/movies/:id", (req, res) => {
 });
 
 /*
----------- LAB2 ----------
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+----------------------- LAB2 -----------------------
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 */
 
 let tasks = [
     { id: 1, title: "Estudar Node.js", completed: false, priority: "high" },
     { id: 2, title: "Fazer LAB-1", completed: true, priority: "medium" }
 ];
-//GET /tasks — Listar todas
-
-/*
-app.get("/tasks", (req, res) => {
-    res.status(200).json({ data: tasks });
-});
-*/
-
+//GET /tasks — Listar todas + GET /tasks?completed=true — Filtrar por estado
 app.get("/tasks", (req, res) => {
 
     const { completed } = req.query;
@@ -231,8 +234,28 @@ app.get("/tasks", (req, res) => {
     res.status(200).json({ data: filteredTasks });
 });
 
-//GET /tasks/:id — Obter uma
+//GET /tasks/stats - lista nº de tarefas, quantas completadas e quantas pendentes
+app.get("/tasks/stats", (req, res) => {
+    const numTasks = tasks.length;
+    let qntFinished = 0;
+    let qntUnfinished = 0;
 
+    for(let i = 0; i < numTasks; i++) {
+        if(tasks[i].completed) {
+            qntFinished++;
+        } else if(!tasks[i].completed) {
+            qntUnfinished++;
+        }
+    }
+
+    res.status(200).json({
+        "Number of Tasks": numTasks,
+        "Finished": qntFinished,
+        "Unfinished": qntUnfinished
+    });
+});
+
+//GET /tasks/:id — Obter uma
 app.get("/tasks/:id", (req, res) => {
     const id = parseInt(req.params.id);
     const task = tasks.find((u) => u.id === id);
@@ -244,25 +267,13 @@ app.get("/tasks/:id", (req, res) => {
     res.status(200).json({ data: task });
 });
 
-/*GET /tasks?completed=true — Filtrar por estado (usar req.query)
-
-NÃO FUNCIONA T.T
-app.get("/tasks", (req, res) => {
-    const { completed } = req.query;
-    
-    const result = completed ? tasks.filter(t => t.completed === (completed === "true")) : tasks;
-
-    res.status(200).json({ data: result });
-});
-*/
-
 //POST /tasks — Criar
 app.post("/tasks", (req, res) => {
     const { title, completed, priority } = req.body;
 
     // Validação:
     if (!title || completed === undefined || !priority) {
-    return res.status(400).json({ message: "Fields 'title', 'completed', and 'priority' are required" });
+        return res.status(400).json({ message: "Fields 'title', 'completed', and 'priority' are required" });
     }
     if (priority !== "low" && priority !== "medium" && priority !== "high") {
         return res.status(400).json({ message: "Priority can only be 'low', 'medium' or 'high'"});
@@ -329,8 +340,240 @@ app.delete("/tasks/:id", (req, res) => {
     res.status(200).json({ message: "Task deleted successfully" });
 });
 
+
+
+
+
+
+
+
+
+
 /*
----------- Middlewares de Erro ----------
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+---------------------- PRISMA ----------------------
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+----------------------- LAB3 -----------------------
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+*/
+
+// src/db.js
+const { PrismaClient } = require('@prisma/client');
+
+const prisma = new PrismaClient();
+
+//POST /tarefas — Criar
+app.post("/tarefas", async (req, res) => {
+    try {
+        const { title, completed, priority } = req.body;
+
+        //Validação
+        if (!title || completed === undefined || !priority) {
+            return res
+                .status(400)
+                .json({ message: "Fields 'title', 'completed', and 'priority' are required" });
+        }
+        if (priority !== "low" && priority !== "medium" && priority !== "high") {
+            return res.status(400).json({ message: "Priority can only be 'low', 'medium' or 'high'"});
+    }
+
+        const newTask = await prisma.task.create({
+            data: { title, completed, priority },
+        });
+
+        return res
+            .status(201)
+            .json({ message: "Task created successfully", data: newTask });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error creating task" });
+    }
+});
+
+//GET /tarefas — Listar todas + GET /tarefas?completed=true — Filtrar por estado
+app.get("/tarefas", async (req, res) => {
+    try {
+        const { completed } = req.query;
+
+        //lista todos (se não houver query)
+        if (completed === undefined) {
+            const tarefas = await prisma.task.findMany();
+            return res.status(200).json({ data: tarefas });
+        }
+
+        // Valida query
+        if (completed !== "true" && completed !== "false") {
+            return res.status(400).json({
+                message: "Query parameter 'completed' must be 'true' or 'false'"
+            });
+        }
+
+        // Lista com filtro
+        const filteredTasks = await prisma.task.findMany({
+            where: {
+                completed: completed === "true"
+            }
+        });
+
+        return res.status(200).json({ data: filteredTasks });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error fetching tasks" });
+    }
+});
+
+//GET /tarefas/stats - lista nº de tarefas, quantas completadas e quantas pendentes
+app.get("/tarefas/stats", async (req, res) => {
+    try {
+        const allTasks = await prisma.task.findMany();
+
+        const numTasks = allTasks.length;
+        let qntFinished = 0;
+        let qntUnfinished = 0;
+
+        for(let i = 0; i < numTasks; i++) {
+            if(allTasks[i].completed) {
+                qntFinished++;
+            } else {
+                qntUnfinished++;
+            }
+        }
+
+        return res.status(200).json({
+            "Number of Tasks": numTasks,
+            "Finished": qntFinished,
+            "Unfinished": qntUnfinished
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error fetching task stats" });
+    }
+});
+
+//GET /tarefas/:id — Listar Um
+app.get("/tarefas/:id", async (req, res) => {
+    try {
+        const taskID = parseInt(req.params.id);
+        if (isNaN(taskID)) {
+            return res.status(400).json({ message: "Invalid task id" });
+        }
+
+        const tarefa = await prisma.task.findUnique({
+            where: { id: taskID }
+        });
+
+        if (!tarefa) {
+            return res.status(404).json({ message: "Task not found" });
+        }
+
+        return res.status(200).json({ data: tarefa });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error fetching task" });
+    }
+});
+
+//PUT /tarefas/:id — Atualizar
+app.put("/tarefas/:id", async (req, res) => {
+    const { id } = req.params;
+    const { title, completed, priority } = req.body;
+    try {
+        const taskID = parseInt(id);
+
+        //Validação
+        if (isNaN(taskID)) {
+            return res.status(400).json({ message: "Invalid task id" });
+        }
+        if (!title || completed === undefined || !priority) {
+            return res.status(400).json({ message: "Fields 'title', 'completed', and 'priority' are required" });
+        }
+        if (priority !== "low" && priority !== "medium" && priority !== "high") {
+            return res.status(400).json({ message: "Priority can only be 'low', 'medium' or 'high'"});
+        }
+
+        const updatedTask = await prisma.task.update({
+            where: { id: taskID },
+            data: { title, completed, priority },
+        });
+
+        return res.status(200).json({
+            message: "Task updated successfully",
+            data: updatedTask,
+        });
+    } catch (error) {
+        console.error(error);
+
+        if (error.code === "P2025") {
+            return res.status(404).json({ message: "Task not found" });
+        }
+
+        return res.status(500).json({ message: "Error updating task" });
+    }
+});
+
+//PATCH /tarefas/:id/toggle — Alternar estado completed
+app.patch("/tarefas/:id/toggle", async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+
+        if (isNaN(id)) {
+            return res.status(400).json({ message: "Invalid task id" });
+        }
+
+        const task = await prisma.task.findUnique({
+            where: { id }
+        })
+
+        if(!task){
+            return res.status(404).json({ message: "Task not found" });
+        }
+
+        const updatedTask = await prisma.task.update({
+            where: { id },
+            data: {
+                completed: !task.completed
+            }
+        });
+
+        return res.status(200).json({ data: updatedTask });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error toggling task"})
+    }
+});
+
+//DELETE /tarefas/:id — Apagar
+app.delete("/tarefas/:id", async (req, res) => {
+    try {
+        const taskID = parseInt(req.params.id);
+
+        if (isNaN(taskID)) {
+            return res.status(400).json({ message: "Invalid task id" });
+        }
+
+        await prisma.task.delete({
+            where: { id: taskID },
+        });
+        return res.status(200).json({ message: "Task deleted successfully" });
+    } catch (error) {
+        console.error(error);
+
+        if (error.code === "P2025") {
+            return res.status(404).json({ message: "Task not found" });
+        }
+
+        return res.status(500).json({ message: "Error deleting task" });
+    }
+});
+
+/*
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+---------------- Middlewares de Erro ---------------
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 */
 // Rota não encontrada (404)
 app.use((req, res) => {
