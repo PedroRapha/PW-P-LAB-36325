@@ -367,20 +367,20 @@ const prisma = new PrismaClient();
 //POST /tarefas — Criar
 app.post("/tarefas", async (req, res) => {
     try {
-        const { title, completed, priority } = req.body;
+        const { title, priority } = req.body;
 
         //Validação
-        if (!title || completed === undefined || !priority) {
+        if (!title || !priority) {
             return res
                 .status(400)
-                .json({ message: "Fields 'title', 'completed', and 'priority' are required" });
+                .json({ message: "Fields 'title' and 'priority' are required" });
         }
         if (priority !== "low" && priority !== "medium" && priority !== "high") {
             return res.status(400).json({ message: "Priority can only be 'low', 'medium' or 'high'"});
     }
 
         const newTask = await prisma.task.create({
-            data: { title, completed, priority },
+            data: { title, completed: false, priority },
         });
 
         return res
@@ -480,7 +480,7 @@ app.get("/tarefas/:id", async (req, res) => {
 //PUT /tarefas/:id — Atualizar
 app.put("/tarefas/:id", async (req, res) => {
     const { id } = req.params;
-    const { title, completed, priority } = req.body;
+    const { title, priority } = req.body;
     try {
         const taskID = parseInt(id);
 
@@ -488,8 +488,8 @@ app.put("/tarefas/:id", async (req, res) => {
         if (isNaN(taskID)) {
             return res.status(400).json({ message: "Invalid task id" });
         }
-        if (!title || completed === undefined || !priority) {
-            return res.status(400).json({ message: "Fields 'title', 'completed', and 'priority' are required" });
+        if (!title || !priority) {
+            return res.status(400).json({ message: "Fields 'title' and 'priority' are required" });
         }
         if (priority !== "low" && priority !== "medium" && priority !== "high") {
             return res.status(400).json({ message: "Priority can only be 'low', 'medium' or 'high'"});
@@ -497,7 +497,7 @@ app.put("/tarefas/:id", async (req, res) => {
 
         const updatedTask = await prisma.task.update({
             where: { id: taskID },
-            data: { title, completed, priority },
+            data: { title, priority },
         });
 
         return res.status(200).json({
