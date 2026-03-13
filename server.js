@@ -365,7 +365,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 //POST /tarefas — Criar
-app.post("/tarefas", async (req, res) => {
+app.post("/prisma/tasks", async (req, res) => {
     try {
         const { title, priority } = req.body;
 
@@ -393,7 +393,7 @@ app.post("/tarefas", async (req, res) => {
 });
 
 //GET /tarefas — Listar todas + GET /tarefas?completed=true — Filtrar por estado
-app.get("/tarefas", async (req, res) => {
+app.get("/prisma/tasks", async (req, res) => {
     try {
         const { completed } = req.query;
 
@@ -426,11 +426,11 @@ app.get("/tarefas", async (req, res) => {
 });
 
 //GET /tarefas/stats - lista nº de tarefas, quantas completadas e quantas pendentes
-app.get("/tarefas/stats", async (req, res) => {
+app.get("/prisma/tasks/stats", async (req, res) => {
     try {
         const allTasks = await prisma.task.findMany();
 
-        const numTasks = allTasks.length;
+        const numTasks = await prisma.task.count();
         let qntFinished = 0;
         let qntUnfinished = 0;
 
@@ -454,7 +454,7 @@ app.get("/tarefas/stats", async (req, res) => {
 });
 
 //GET /tarefas/:id — Listar Um
-app.get("/tarefas/:id", async (req, res) => {
+app.get("/prisma/tasks/:id", async (req, res) => {
     try {
         const taskID = parseInt(req.params.id);
         if (isNaN(taskID)) {
@@ -478,7 +478,7 @@ app.get("/tarefas/:id", async (req, res) => {
 });
 
 //PUT /tarefas/:id — Atualizar
-app.put("/tarefas/:id", async (req, res) => {
+app.put("/prisma/tasks/:id", async (req, res) => {
     const { id } = req.params;
     const { title, priority } = req.body;
     try {
@@ -516,7 +516,7 @@ app.put("/tarefas/:id", async (req, res) => {
 });
 
 //PATCH /tarefas/:id/toggle — Alternar estado completed
-app.patch("/tarefas/:id/toggle", async (req, res) => {
+app.patch("/prisma/tasks/:id/toggle", async (req, res) => {
     try {
         const id = parseInt(req.params.id);
 
@@ -547,7 +547,7 @@ app.patch("/tarefas/:id/toggle", async (req, res) => {
 });
 
 //DELETE /tarefas/:id — Apagar
-app.delete("/tarefas/:id", async (req, res) => {
+app.delete("/prisma/tasks/:id", async (req, res) => {
     try {
         const taskID = parseInt(req.params.id);
 
